@@ -1,27 +1,44 @@
 <?php
 
+use Rakit\Validation\Validator;
+
 $db = new \SQLite3('../db/project.sqlite3');
 
-$result = $db->query("SELECT * FROM players WHERE team_id =1");
- class Player{
-     public function __construct(
-         public int $number,
-         public string $name,
-         public string $surname,
-     )
-     {}
+if ($_SERVER['REQUEST_METHOD']=== 'POST') {
 
-     public function __toString(): string
-     {
-         return sprintf('#%d (%s. %s)', $this->number, $this->name, $this->surname);
-     }
- }
+    $validator = new Validator();
+    $validation = $validator->make($_POST, [
+        'player_id' => 'required|numeric',
+        'pos_x' => 'required|numeric',
+        'pos_y' => 'required|numeric',
+    ]);
 
-$players = [];
-while ($row = $result ->fetchArray()){
-    $players[] = new PLayer($row['number'], $row['name'], $row ['surname']);
+    $validation->validate();
+
+    if ($validation->fails()) {
+
+        view('views/index.php', [
+            'error' => 'nepareizi ievadīti dati',
+        ]);
+        die();
+    }
+
+    $sql = <<<SQL
+        INSERT INTO score_map (player_id, pos_x, pos_y) VALUES (:player, :x, :y)
+    SQL;
+
+    $stm = $db->prepare($sql);
+    $stm->bindValue(':player', $_POST['player_id'], SQLITE3_INTEGER);
+    $stm->bindValue(':x', $_POST['pos_x'], SQLITE3_INTEGER);
+    $stm->bindValue(':y', $_POST['pos_y'], SQLITE3_INTEGER);
+    $stm->execute();
+
+    header ('location: /');
+    die();
 }
-    dd($players);
 
-require '../views/index.php';
+$players = \App\Player::getPlayers(1);
 
+view('index.php', [
+    'players' => $players,
+]);

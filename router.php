@@ -13,6 +13,10 @@ function abort(int $code = 404){
 
 $routes = [
     '/' => 'controllers/index.php',
+    '/stats' => 'controllers/stats.php',
+
+    '/create-demo-account' => 'controllers/users/create.php',
+    '/login' => 'controllers/users/login.php',
 ];
 
 if (array_key_exists($uri, $routes)){
